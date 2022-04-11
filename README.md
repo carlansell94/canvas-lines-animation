@@ -4,9 +4,14 @@ Features:
 * Canvas draw rate independent of system frame rate, allowing system load to be reduced
 * Canvas element is hidden when scrolled off screen, stopping all processing and rendering
 * Range of settings to customise the animation
+* -os version uses an offscreen canvas to improve performance
 
 ## How To Use
-Include the file in your HTML, and provide an empty canvas element. By default, the first canvas element will be used. It is recommended to use an off screen canvas/service worker to render this code, particularly when other JS is active at the same time.
+First, you'll need to choose whether to use the standard, or offscreen variant. The offscreen version is recommended.
+
+Include either 'animation.js' (standard), or 'animation-os-loader.js' (offscreen) in your HTML file.
+
+Provide an empty canvas element in your HTML. By default, the first canvas element will be used.
 
 If the system is struggling with the default configuration, start by setting shadowAmount to 0. Applying a shadow is computationally very expensive, so switching this off can lead to a decent speed up.
 
