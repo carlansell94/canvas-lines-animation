@@ -201,6 +201,27 @@
             requestAnimationFrame(render);
         }
 
+        function debounce(func, timeout = 250) {
+            let timer;
+
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        function pageScrollHandler() {
+            if (window.scrollY > canvas.height) {
+                running = false;
+                canvas.style.display = 'none';
+                return;
+            }
+
+            canvas.style.display = 'block';
+            running = true;
+            lastRenderTime = Date.now();
+        }
+
         for (let i = 0; i < lineQty; i++) {
             const line = new Line();
             lines.push(line);
@@ -213,17 +234,7 @@
             canvas.height = window.innerHeight;
         });
 
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > canvas.height) {
-                running = false;
-                canvas.style.display = 'none';
-                return;
-            }
-
-            canvas.style.display = 'block';
-            running = true;
-            lastRenderTime = Date.now();
-        });
+        window.addEventListener('scroll', debounce(() => pageScrollHandler()));
     });
 })();
 
