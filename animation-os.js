@@ -199,7 +199,7 @@ function animate() {
 onmessage = function(ev) {
     'use strict'
 
-    if (ev.data.running && ev.data.running !== running) {
+    if (typeof ev.data.running !== undefined && ev.data.running !== running) {
         running = ev.data.running;
         
         if (running) {
