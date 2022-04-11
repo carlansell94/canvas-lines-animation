@@ -29,13 +29,12 @@
     const minCanvasDrawRate = 20;
 
     window.addEventListener('load', () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.querySelector('canvas');
 
         if (!canvas || !canvas.getContext) {
             return false;
         }
 
-        document.querySelector('main').prepend(canvas);
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         const ctx = canvas.getContext('2d');
