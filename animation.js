@@ -44,113 +44,117 @@
         let running = true;
         let lastRenderTime = Date.now();
 
-        function Line() {
-            this.ctx = ctx;
-            this.init();
-        }
-
-        Line.prototype.init = function() {
-            this.points = [];
-            this.length = Math.ceil(Math.random() * (maxLength - minLength)) + minLength;
-            this.startingEdge = Math.floor(Math.random() * 4);
-            this.fadePoint = this.length * fadeAmount / 100;
-            this.speed = Math.ceil(Math.random() * (maxLineSpeed - minLineSpeed)) + minLineSpeed;
-
-            if (this.startingEdge === 0) {
-                this.xPos = Math.random() * canvas.width;
-                this.yPos = 0;
-            } else if (this.startingEdge === 1) {
-                this.xPos = canvas.width;
-                this.yPos = Math.random() * canvas.height;
-            } else if (this.startingEdge === 2) {
-                this.xPos = Math.random() * canvas.width;
-                this.yPos = canvas.height;
-            } else {
-                this.xPos = 0;
-                this.yPos = Math.random() * canvas.height;
+        class Line {
+            constructor() {
+                this.ctx = ctx;
+                this.init();
             }
 
-            this.direction = (this.startingEdge + 2) % 4;
-        };
+            get startingCoordinates() {
+                if (this.startingEdge === 0) {
+                    return [Math.random() * canvas.width, 0];
+                } 
+                
+                if (this.startingEdge === 1) {
+                    return [canvas.width, Math.random() * canvas.height];
+                } 
+                
+                if (this.startingEdge === 2) {
+                    return [Math.random() * canvas.width, canvas.height];
+                }
 
-        Line.prototype.isInCanvas = function() {
-            return !(this.xPos > canvas.width || this.xPos < 0 || this.yPos > canvas.height || this.yPos < 0);
-        };
+                return [0, Math.random() * canvas.height]
+            }
 
-        Line.prototype.getNextDirection = function() {
-            if (turnChance === 0) {
+            get nextDirection() {
+                if (turnChance === 0) {
+                    return this.direction;
+                }
+    
+                const dir = Math.random() * 100;
+    
+                if (dir < turnChance) {
+                    return (this.direction + 3) % 4 === this.startingEdge ? this.direction : (this.direction + 3) % 4;
+                }
+    
+                if (dir > 100 - turnChance) {
+                    return (this.direction + 1) % 4 === this.startingEdge ? this.direction : (this.direction + 1) % 4;
+                }
+    
                 return this.direction;
             }
 
-            const dir = Math.random() * 100;
-
-            if (dir < turnChance) {
-                return (this.direction + 3) % 4 === this.startingEdge ? this.direction : (this.direction + 3) % 4;
+            set point(coordinates) {
+                this.points = [coordinates].concat(this.points).slice(0, this.length);
             }
 
-            if (dir > 100 - turnChance) {
-                return (this.direction + 1) % 4 === this.startingEdge ? this.direction : (this.direction + 1) % 4;
+            init() {
+                this.points = [];
+                this.length = Math.ceil(Math.random() * (maxLength - minLength)) + minLength;
+                this.startingEdge = Math.floor(Math.random() * 4);
+                this.fadePoint = this.length * fadeAmount / 100;
+                this.speed = Math.ceil(Math.random() * (maxLineSpeed - minLineSpeed)) + minLineSpeed;
+                [this.xPos, this.yPos] = this.startingCoordinates;
+                this.direction = (this.startingEdge + 2) % 4;
             }
 
-            return this.direction;
-        };
-
-        Line.prototype.shrink = function() {
-            this.length--;
-
-            if (this.length === 0) {
-                this.init();
-                return;
+            isInCanvas() {
+                return !(this.xPos > canvas.width || this.xPos < 0 || this.yPos > canvas.height || this.yPos < 0);
             }
 
-            this.points = this.points.slice(0, this.length);
-        };
+            shrink() {
+                this.length--;
 
-        Line.prototype.move = function() {
-            this.points = [[this.xPos, this.yPos]].concat(this.points).slice(0, this.length);
-            this.direction = this.getNextDirection();
-
-            if (this.direction === 0) {
-                this.yPos -= this.speed;
-                return;
-            }
-
-            if (this.direction === 1) {
-                 this.xPos += this.speed;
-                 return;
-            }
-
-            if (this.direction === 2) {
-                this.yPos += this.speed;
-                return;
-            }
-
-            this.xPos -= this.speed;
-        };
-
-        Line.prototype.refresh = function() {
-            this.isInCanvas() ? this.move() : this.shrink();
-        };
-
-        Line.prototype.draw = function() {
-            for (let i = 1; i < this.points.length; i++) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.shadowBlur = shadowAmount;
-                ctx.shadowColor = shadowColour;
-
-                if (i > this.length - this.fadePoint) {
-                    ctx.globalAlpha = (this.length - i) / this.fadePoint;
+                if (this.length === 0) {
+                    this.init();
+                    return;
                 }
 
-                ctx.strokeStyle = lineColour;
-                ctx.lineWidth = lineWidth;
-                ctx.moveTo(this.points[i - 1][0], this.points[i - 1][1]);
-                ctx.lineTo(this.points[i][0], this.points[i][1]);
-                ctx.stroke();
-                ctx.restore();
+                this.points = this.points.slice(0, this.length);
             }
-        };
+
+            move() {
+                this.point = [this.xPos, this.yPos];
+                this.direction = this.nextDirection;
+
+                if (this.direction === 0) {
+                    this.yPos -= this.speed;
+                    return;
+                }
+
+                if (this.direction === 1) {
+                    this.xPos += this.speed;
+                    return;
+                }
+
+                if (this.direction === 2) {
+                    this.yPos += this.speed;
+                    return;
+                }
+
+                this.xPos -= this.speed;
+            }
+
+            refresh() {
+                this.isInCanvas() ? this.move() : this.shrink();
+            }
+
+            draw() {
+                for (let i = 1; i < this.points.length; i++) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.shadowBlur = shadowAmount;
+                    ctx.shadowColor = shadowColour;
+                    ctx.globalAlpha = (i > this.length - this.fadePoint) ? (this.length - i) / this.fadePoint : "1";
+                    ctx.strokeStyle = lineColour;
+                    ctx.lineWidth = lineWidth;
+                    ctx.moveTo(this.points[i - 1][0], this.points[i - 1][1]);
+                    ctx.lineTo(this.points[i][0], this.points[i][1]);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
 
         function reduceDeviceLoad() {
             if (lines.length > minLineQty) {
